@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --account=mschatz1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=10:00:00
+
+
+##4k the raw
+ml python/3.4.2
+python3 ~/Code/timp_nanopore/aws/tar4kbin.py -i $1 --outdir $2/raw
+
+
+touch $2/untar_done.txt

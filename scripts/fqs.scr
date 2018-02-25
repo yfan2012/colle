@@ -1,0 +1,35 @@
+#!/bin/bash -l
+
+#SBATCH --account=mschatz1
+#SBATCH --time=1:0:0
+#SBATCH --partition=shared
+#SBATCH --nodes=1
+
+
+mkdir -p $1/fastqs/pass
+mkdir -p $1/fastqs/fail
+
+for ((i=0;i<=$2;i++));
+do
+    (
+	for f in $1/called/$i/workspace/pass/*fastq; do
+	    name=`basename $f`
+	    cp $f $1/fastqs/pass/$i.$name;
+	done
+
+	for f in $1/called/$i/workspace/fail/*fastq; do
+	    name=`basename $f`
+	    cp $f $1/fastqs/fail/$i.$name;
+	done
+
+    )&
+done
+
+prefix=` echo $1 | rev | cut -d '/' -f 1 | rev `
+
+cat $1/fastqs/pass/*fastq > $1/fastqs/$prefix.fq
+cat $1/fastqs/fail/*fastq > $1/fastqs/$prefix.fail.fq
+
+
+mkdir -p $1/batch_logs
+touch $1/batch_logs/fqs_done.txt

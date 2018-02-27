@@ -22,7 +22,6 @@ allruns=unique(data$run_code)
 
 foreach(x=1:length(allruns)) %dopar% {
     i=allruns[x]
-    library('googlesheets')
     
     runsamps=data[data$run_code==i,]
     rundir=paste0(datadir, runsamps$run_name[1])

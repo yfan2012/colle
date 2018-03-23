@@ -8,7 +8,7 @@ cl = makeCluster(6)
 registerDoParallel(cl, cores=6)
 
 scratch='/scratch/groups/mschatz1/cpowgs/'
-srcdir='~/Code/utils/marcc/'
+srcdir='~/Code/kusama/scripts/'
 
 gs_auth(token = "~/.ssh/googlesheets_token.rds")
 status=gs_url('https://docs.google.com/spreadsheets/d/1BbVvmVUaJGPFUkUO22Go9VMrLZ9iOojeND__E2SD4LY/edit#gid=0')

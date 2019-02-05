@@ -6,17 +6,17 @@ suppressPackageStartupMessages(library(doParallel))
 cl = makeCluster(6)
 registerDoParallel(cl, cores=6)
 
-epidir='/work-zfs/mschatz1/cpowgs/epicenter/'
-scratch='/scratch/groups/mschatz1/cpowgs/epicenter/'
+epidir='/work-zfs/mschatz1/cpowgs/r21/'
+scratch='/scratch/groups/mschatz1/cpowgs/r21/'
 srcdir='~/Code/utils/marcc/'
 
 gs_auth(token = "~/.ssh/googlesheets_token.rds")
-status=gs_url('https://docs.google.com/spreadsheets/d/1K6rpcxvNPn0vX7qFKti150X9cYZtwPR-m_8TOC_RlTQ/edit#gid=0')
+status=gs_url('https://docs.google.com/spreadsheets/d/1ggfN6cURCXy1HUgWNiwy24LOa7WhRQzm4Ndvyaw4BKI/edit#gid=0')
 olddata=gs_read(status)
 olddata$barcode=gsub('NB', 'barcode', olddata$barcode)
 
 ##check to see if stuff has finished running since last time
-source('~/Code/colle/jhpe_update.R')
+source('~/Code/colle/r21_bc_update.R')
 data=update_gsheet(olddata, scratch)
 gs_edit_cells(status, input=data, anchor=paste0('A1'))
 
@@ -126,27 +126,23 @@ updata=ddply(calldata, 1, function(x){
     
     ##polish
     polished=paste0(polishdir, '/', name, '.polished.fasta')
-    if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$polish, 'submitted')) {
+    if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$polish, 'submitted') && !file.exists(polished)) {
         system(paste0('mkdir -p ', polishdir))
         
-        ##submit the polish script only if polished does not exist or if polished is size0
-        if (!file.exists(polished) || file.info(polished)$size==0) {
-            system(paste0('sbatch --output=', batchlogsdir, '/polish.out --job-name=', name,' ', srcdir, 'polish.scr ', datadir, ' ', rundir))
-            x$polish='submitted'
-        }
+        ##submit the polish script
+        system(paste0('sbatch --output=', batchlogsdir, '/polish.out --job-name=', name,' ', srcdir, 'polish.scr ', datadir, ' ', rundir))
+        x$polish='submitted'
     }
     
     
     ##mpolish
     mpolished=paste0(mpolishdir, '/', name, '.polished_meth.fasta')
-    if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$mpolish, 'submitted') && file.exists(polished)) {
+    if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$mpolish, 'submitted') && file.exists(polished) && !file.exists(mpolished)) {
         system(paste0('mkdir -p ', mpolishdir))
         
         ##submit the polish script
-        if (!file.exists(mpolished) || file.info(mpolished)$size==0) {
-            system(paste0('sbatch --output=', batchlogsdir, '/polish_meth.out --job-name=', name,' ', srcdir, 'polish_meth.scr ', datadir))
-            x$mpolish='submitted'
-        }
+        system(paste0('sbatch --output=', batchlogsdir, '/polish_meth.out --job-name=', name,' ', srcdir, 'polish_meth.scr ', datadir))
+        x$mpolish='submitted'
     }
     
     

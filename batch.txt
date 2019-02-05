@@ -1,0 +1,38 @@
+Auto-refreshing stale OAuth token.
+Sheet-identifying info appears to be a browser URL.
+googlesheets will attempt to extract sheet key from the URL.
+Putative key: 1BbVvmVUaJGPFUkUO22Go9VMrLZ9iOojeND__E2SD4LY
+Sheet successfully identified: "cpowgs_status"
+Accessing worksheet titled 'Sheet1'.
+Parsed with column specification:
+cols(
+  isolate_num = col_character(),
+  org = col_character(),
+  raw1 = col_character(),
+  raw2 = col_character(),
+  untar = col_character(),
+  call = col_character(),
+  fq = col_character(),
+  assembly = col_character(),
+  align = col_character(),
+  polish = col_character(),
+  mpolish = col_character(),
+  pilon = col_character()
+)
+Range affected by the update: "R1C1:R72C12"
+Worksheet "Sheet1" successfully updated with 864 new value(s).
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-133_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-152_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-166_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-168_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-170_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-171_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-172_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-185_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-196_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-260_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-261_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-262_*.fastq.gz’: No such file or directory
+cp: cannot stat ‘/work-zfs/mschatz1/cpowgs/illumina/klpn_all/KLPN-38_*.fastq.gz’: No such file or directory
+Range affected by the update: "R1C1:R72C12"
+Worksheet "Sheet1" successfully updated with 864 new value(s).

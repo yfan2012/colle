@@ -42,120 +42,127 @@ updata=ddply(data, .(isolate_num), function(x) {
     polishdir=paste0(datadir, '/polish')
     mpolishdir=paste0(datadir, '/mpolish')
     pilondir=paste0(datadir,'/pilon')
-    
-    system(paste0('mkdir -p ', datadir))
-    system(paste0('mkdir -p ', batchlogsdir))
-    system(paste0('mkdir -p ', rawdir))
-    
-    
-    ##untar raw if raw dir isn't there
-    if (!file.exists(paste0(datadir, '/untar_done.txt')) && !identical(x$untar, 'submitted')) {
-        ##use appropriate untar script depending on how many there are
-        if (is.na(x$raw2)) {
-            system(paste0('sbatch --output=', batchlogsdir, '/untar_log.txt ~/Code/utils/marcc/untar.scr ', paste0(work,x$raw1), ' ', datadir))
-            x$untar='submitted'
-        } else {
-            system(paste0('sbatch --output=', batchlogsdir, '/untar_log.txt ~/Code/utils/marcc/untar2.scr ',  paste0(work, x$raw1), ' ', paste0(work,x$raw2), ' ', datadir))
-            x$untar='submitted'
+
+
+    ##only do shit if the archived data isn't there
+    archdir=paste0('/work-zfs/mschatz1/cpowgs/analysis/r21/', name)
+    if (!dir.exists(archdir)) {
+        
+        system(paste0('mkdir -p ', datadir))
+        system(paste0('mkdir -p ', batchlogsdir))
+        system(paste0('mkdir -p ', rawdir))
+
+        
+        ##untar raw if raw dir isn't there
+        if (!file.exists(paste0(datadir, '/untar_done.txt')) && !identical(x$untar, 'submitted')) {
+            ##use appropriate untar script depending on how many there are
+            if (is.na(x$raw2)) {
+                system(paste0('sbatch --output=', batchlogsdir, '/untar_log.txt ~/Code/utils/marcc/untar.scr ', paste0(work,x$raw1), ' ', datadir))
+                x$untar='submitted'
+            } else {
+                system(paste0('sbatch --output=', batchlogsdir, '/untar_log.txt ~/Code/utils/marcc/untar2.scr ',  paste0(work, x$raw1), ' ', paste0(work,x$raw2), ' ', datadir))
+                x$untar='submitted'
+            }
         }
-    }
-    
-    
-    
-    ##submit call jobs if untar is done, and calling hasn't been attempted yet
-    numdirs=length(list.dirs(rawdir, recursive=FALSE))-1
-    numcalled=length(list.files(calldonedir, recursive=FALSE))-1
-    fq=paste0(fqdir, '/', name, '.fq')    
-    if (file.exists(paste0(datadir, '/untar_done.txt')) && numcalled!=numdirs && !identical(x$call, 'submitted') && !file.exists(fq) ) {
-        system(paste0('mkdir -p ', calldir))
-        system(paste0('mkdir -p ', calllogsdir))
-        system(paste0('mkdir -p ', calldonedir))
         
-        ##check how large the calling array needs to be, and submit
-        system(paste0('sbatch --array=0-', as.character(numdirs), ' --job-name=', name, ' --output=', calllogsdir, '/', name, '.%A_%a.out ', srcdir , 'call.scr ', datadir))
-        x$call='submitted'
-    }
-    
-    
-    ##submit fq jobs
-    if (numcalled==numdirs && numdirs!=-1 && !file.exists(fq) && !identical(x$fq, 'submitted')) {
-        system(paste0('mkdir -p ', fqdir))
         
-        ##submit the fq gather script
-        system(paste0('sbatch ', '--output=',batchlogsdir, '/fq.out ', srcdir , 'fqs.scr ', datadir))
-        x$fq='submitted'
         
-    }
+        ##submit call jobs if untar is done, and calling hasn't been attempted yet
+        numdirs=length(list.dirs(rawdir, recursive=FALSE))-1
+        numcalled=length(list.files(calldonedir, recursive=FALSE))-1
+        fq=paste0(fqdir, '/', name, '.fq')    
+        if (file.exists(paste0(datadir, '/untar_done.txt')) && numcalled!=numdirs && !identical(x$call, 'submitted') && !file.exists(fq) ) {
+            system(paste0('mkdir -p ', calldir))
+            system(paste0('mkdir -p ', calllogsdir))
+            system(paste0('mkdir -p ', calldonedir))
 
-    
-    ##submit assembly job
-    assembly=paste0(canudir, '/', name, '.contigs.fasta')
-    if (file.exists(fq) && !identical(x$assembly, 'submitted') && !file.exists(assembly)) {
-        system(paste0('mkdir -p ', canudir))
-        
-        ##submit the assembly script
-        system(paste0('bash ',srcdir, '/assemble_bacteria.sh ', fq, ' ', canudir))
-        x$assembly='submitted'
-    }
-
-    
-    ##alignment
-    alignment=paste0(bamdir, '/', name, '.sorted.bam')
-    if (file.exists(fq) && !identical(x$align, 'submitted') && file.exists(assembly) && !file.exists(alignment)) {
-        system(paste0('mkdir -p ', bamdir))
-
-        ##submit the align script
-        system(paste0('sbatch ', '--output=', batchlogsdir, '/align.out ', srcdir, 'align.scr ', datadir, ' ', assembly))
-        x$align='submitted'
-    }
-    
-
-    ##polish
-    polished=paste0(polishdir, '/', name, '.polished.fasta')
-    if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$polish, 'submitted')) {
-        system(paste0('mkdir -p ', polishdir))
-        
-        if (!file.exists(polished) || file.info(polished)$size==0) {
-            ##submit the polish script
-            system(paste0('sbatch --output=', batchlogsdir, '/polish.out --job-name=', name,' ', srcdir, 'polish.scr ', datadir))
-            x$polish='submitted'
+            ##check how large the calling array needs to be, and submit
+            system(paste0('sbatch --array=0-', as.character(numdirs), ' --job-name=', name, ' --output=', calllogsdir, '/', name, '.%A_%a.out ', srcdir , 'call.scr ', datadir))
+            x$call='submitted'
         }
-    }
-
     
-    ##mpolish
-    mpolished=paste0(mpolishdir, '/', name, '.polished_meth.fasta')
-    if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$mpolish, 'submitted') && file.exists(polished)) {
-        system(paste0('mkdir -p ', mpolishdir))
-
-        if (!file.exists(mpolished) || (file.exists(mpolished) && file.info(mpolished)$size==0)) {
-            ##submit the polish script
-            system(paste0('sbatch --output=', batchlogsdir, '/polish_meth.out --job-name=', name,' ', srcdir, 'polish_meth.scr ', datadir))
-            x$mpolish='submitted'
+        ##submit fq jobs
+        if (numcalled==numdirs && numdirs!=-1 && !file.exists(fq) && !identical(x$fq, 'submitted')) {
+            system(paste0('mkdir -p ', fqdir))
+            
+            ##submit the fq gather script
+            system(paste0('sbatch ', '--output=',batchlogsdir, '/fq.out ', srcdir , 'fqs.scr ', datadir))
+            x$fq='submitted'
+            
         }
-    }
-    
-
-    ##pilon
-    pilon=paste0(pilondir, '/', name, '.pilon.10.fasta')
-    illpre=paste0(x$org, '-' , x$isolate_num)
-
-    
-    if (file.exists(assembly) && !file.exists(pilon) && !identical(x$pilon, 'submitted')) {
-        ##submit the pilon script - script assumes location of illumina data
-        system(paste0('rm -rf ', pilondir, '/*'))
-        system(paste0('mkdir -p ', pilondir))
-        system(paste0('cp /work-zfs/mschatz1/cpowgs/illumina/klpn_all/', illpre, '_*.fastq.gz ', pilondir, '/'))
-        system(paste0('rename - _ ', pilondir, '/*'))
-        illreads=list.files(pilondir, pattern='fastq.gz')
-
-        if (length(illreads)>1){
-            system(paste0('sbatch --output=', batchlogsdir, '/pilon.out --job-name=', name, ' ', srcdir, 'pilon.scr ', datadir)) 
-            x$pilon='submitted'
+        
+        
+        ##submit assembly job
+        assembly=paste0(canudir, '/', name, '.contigs.fasta')
+        if (file.exists(fq) && !identical(x$assembly, 'submitted') && !file.exists(assembly)) {
+            system(paste0('mkdir -p ', canudir))
+            
+            ##submit the assembly script
+            system(paste0('bash ',srcdir, '/assemble_bacteria.sh ', fq, ' ', canudir))
+            x$assembly='submitted'
         }
+
+
+        ##check if illumina data exists
+        illpre=paste0(x$org, '-' , x$isolate_num)
+        illdata=list.files('/work-zfs/mschatz1/cpowgs/illumina_r21/klpn_all/', pattern=paste0(illpre, '_*'))
+
+        
+        ##alignment
+        alignment=paste0(bamdir, '/', name, '.sorted.bam')
+        if (file.exists(fq) && !identical(x$align, 'submitted') && file.exists(assembly) && !file.exists(alignment) && length(illdata)!=2) {
+            system(paste0('mkdir -p ', bamdir))
+        
+            ##submit the align script
+            system(paste0('sbatch ', '--output=', batchlogsdir, '/align.out ', srcdir, 'align.scr ', datadir, ' ', assembly))
+            x$align='submitted'
+        }
+        
+        
+        ##polish
+        polished=paste0(polishdir, '/', name, '.polished.fasta')
+        if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$polish, 'submitted') && length(illdata)!=2) {
+            system(paste0('mkdir -p ', polishdir))
+            
+            if (!file.exists(polished) || file.info(polished)$size==0) {
+                ##submit the polish script
+                system(paste0('sbatch --output=', batchlogsdir, '/polish.out --job-name=', name,' ', srcdir, 'polish.scr ', datadir))
+                x$polish='submitted'
+            }
+        }
+        
+        
+        ##mpolish
+        mpolished=paste0(mpolishdir, '/', name, '.polished_meth.fasta')
+        if (file.exists(fq) && file.exists(assembly) && file.exists(alignment) && !identical(x$mpolish, 'submitted') && file.exists(polished) && length(illdata)!=2) {
+            system(paste0('mkdir -p ', mpolishdir))
+            
+            if (!file.exists(mpolished) || (file.exists(mpolished) && file.info(mpolished)$size==0)) {
+                ##submit the polish script
+                system(paste0('sbatch --output=', batchlogsdir, '/polish_meth.out --job-name=', name,' ', srcdir, 'polish_meth.scr ', datadir))
+                x$mpolish='submitted'
+            }
+        }
+        
+        
+        ##pilon
+        pilon=paste0(pilondir, '/', name, '.pilon.10.fasta')
+
+        if (file.exists(assembly) && !file.exists(pilon) && !identical(x$pilon, 'submitted')) {
+            ##submit the pilon script - script assumes location of illumina data
+            system(paste0('rm -rf ', pilondir, '/*'))
+            system(paste0('mkdir -p ', pilondir))
+            system(paste0('cp /work-zfs/mschatz1/cpowgs/illumina_r21/klpn_all/', illpre, '_*.fastq.gz ', pilondir, '/'))
+            system(paste0('rename - _ ', pilondir, '/*'))
+            illreads=list.files(pilondir, pattern='fastq.gz')
+            
+            if (length(illreads)>1){
+                system(paste0('sbatch --output=', batchlogsdir, '/pilon.out --job-name=', name, ' ', srcdir, 'pilon.scr ', datadir)) 
+                x$pilon='submitted'
+            }
+        }
+        
     }
-    
-    
     return(x)        
 })
 

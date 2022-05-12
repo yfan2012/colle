@@ -1,2 +1,2 @@
-# kusama
+# colle
 automate calling/assembling pipeline
